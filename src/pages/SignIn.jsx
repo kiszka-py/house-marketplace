@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { ReactComponent as ArrowRightIcon } from "../assets/svg/keyboardArrowRightIcon.svg";
 import visibilityIcon from "../assets/svg/visibilityIcon.svg";
 
@@ -9,6 +10,7 @@ function SignIn() {
     email: "",
     password: "",
   });
+  const navigate = useNavigate();
   const { email, password } = formData;
 
   function onChange(e) {
@@ -18,14 +20,30 @@ function SignIn() {
     });
   }
 
-  const navigate = useNavigate();
+  async function onSubmit(e) {
+    e.preventDefault();
+
+    const auth = getAuth();
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      if (userCredential.user) navigate("/");
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   return (
     <>
       <div className="pageContainer">
         <header>
           <p className="pageHeader">Welcome back!</p>
         </header>
-        <form action="">
+        <form onSubmit={onSubmit}>
           <input
             type="email"
             className="emailInput"
@@ -56,7 +74,7 @@ function SignIn() {
 
           <div className="signInBar">
             <p className="signInText">Sign In</p>
-            <button className="signInButton">
+            <button type="submit" className="signInButton">
               <ArrowRightIcon fill="#ffffff" width="34px" height="34px" />
             </button>
           </div>
