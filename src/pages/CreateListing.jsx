@@ -3,6 +3,15 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
+import { v4 as uuidv4 } from "uuid";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase.config";
 
 function CreateListing() {
   const [loading, setLoading] = useState(false);
@@ -16,7 +25,7 @@ function CreateListing() {
     furnished: true,
     address: "",
     offer: false,
-    reguralPrice: 0,
+    regularPrice: 0,
     discountedPrice: 0,
     images: {},
     latitude: 0,
@@ -92,15 +101,77 @@ function CreateListing() {
       if (location === undefined || location.includes("undefined")) {
         toast.error("Please enter correct address");
       }
-
-      console.log(geolocation);
     } else {
       geolocation.lat = latitude;
       geolocation.lng = longitude;
       location = address;
     }
 
+    // Store image in firebase
+    async function storeImage(image) {
+      return new Promise((resolve, reject) => {
+        const storage = getStorage();
+        const fileName = `${auth.currentUser.uid}-${image.name}-${uuidv4()}`;
+
+        const storageRef = ref(storage, "images/" + fileName);
+        const metadata = {
+          contentType: "image/jpeg",
+        };
+        const uploadTask = uploadBytesResumable(storageRef, image, metadata);
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log("Upload is " + progress + "% done");
+            switch (snapshot.state) {
+              case "paused":
+                console.log("Upload is paused");
+                break;
+              case "running":
+                console.log("Upload is running");
+                break;
+            }
+          },
+          (error) => {
+            reject(error);
+          },
+          () => {
+            // Upload completed successfully, now we can get the download URL
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              resolve(downloadURL);
+            });
+          }
+        );
+      });
+    }
+
+    const imgUrls = await Promise.all(
+      [...images].map((image) => storeImage(image))
+    ).catch(() => {
+      setLoading(false);
+      toast.error("Images not uploaded");
+      return;
+    });
+
+    const formDataCopy = {
+      ...formData,
+      imgUrls,
+      geolocation,
+      timestamp: serverTimestamp(),
+    };
+
+    delete formDataCopy.images;
+    delete formDataCopy.address;
+    !formDataCopy.offer && delete formDataCopy.discountedPrice;
+
+    const docRef = await addDoc(collection(db, "listings"), formDataCopy);
+
     setLoading(false);
+    toast.success("Listing saved");
+    navigate(`/category/${formDataCopy.type}/${docRef.id}}`);
     return;
   }
 
