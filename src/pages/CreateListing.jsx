@@ -78,11 +78,22 @@ function CreateListing() {
     let location;
 
     if (geolocationEnabled) {
+      const API_KEY = `cb04ea99c7c040c1ae115e08fb761b30`;
       const response = await fetch(
-        `http://api.positionstack.com/v1/forward?access_key=0c0c595fcad71a481a490bcbe52700c9&query=${address}`
+        `https://api.opencagedata.com/geocode/v1/json?key=${API_KEY}&q=${encodeURIComponent(
+          address
+        )}&limit=1&no_annotations=1&abbrv=1`
       );
       const data = await response.json();
       console.log(data);
+      geolocation.lat = data.results[0]?.geometry.lat ?? 0;
+      geolocation.lng = data.results[0]?.geometry.lng ?? 0;
+      location = data.results[0]?.formatted ?? undefined;
+      if (location === undefined || location.includes("undefined")) {
+        toast.error("Please enter correct address");
+      }
+
+      console.log(geolocation);
     } else {
       geolocation.lat = latitude;
       geolocation.lng = longitude;
