@@ -27,13 +27,13 @@ function Profile() {
     name: auth.currentUser.displayName,
     email: auth.currentUser.email,
   });
-  const navigete = useNavigate();
+  const navigate = useNavigate();
   const { name, email } = formData;
 
   async function onLogout(e) {
     try {
       await signOut(auth);
-      navigete("/");
+      navigate("/");
     } catch (error) {
       console.log(error);
     }
@@ -77,7 +77,6 @@ function Profile() {
           data: doc.data(),
         })
       );
-      console.log(listings);
       setListings(listings);
       setLoading(false);
     }
@@ -94,6 +93,10 @@ function Profile() {
       setListings(updatedListings);
       toast.success("Successfully deleted listing.");
     }
+  }
+
+  function onEdit(listingId) {
+    navigate(`/edit-listing/${listingId}`);
   }
 
   // return user ? <h1>{user.displayName}</h1> : "Not Logged In";
@@ -152,7 +155,8 @@ function Profile() {
                   key={listing.id}
                   listing={listing.data}
                   id={listing.id}
-                  onDelete={onDelete}
+                  onDelete={() => onDelete(listing.id)}
+                  onEdit={() => onEdit(listing.id)}
                 />
               ))}
             </ul>
