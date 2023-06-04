@@ -5,6 +5,7 @@ import {
   orderBy,
   query,
   where,
+  startAfter,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -16,6 +17,7 @@ import ListingItem from "../components/ListingItem";
 function Offers() {
   const [listings, setListings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastFetchedListing, setLastFetchedListing] = useState(null);
   const params = useParams();
 
   useEffect(() => {
