@@ -35,6 +35,29 @@ function Listing() {
 
   return (
     <main>
+      {/* SWIPER */}
+
+      <swiper-container slides-per-view="1" navigation="true" pagination="true">
+        {listing.imgUrls.map((img, index) => {
+          return (
+            <swiper-slide key={index}>
+              {/* <div
+                className="swiperSlideDiv"
+                style={{
+                  background: `url(${listing.imgUrls[index]})`,
+                  backgroundSize: "cover",
+                }}
+              ></div> */}
+              <img
+                src={img}
+                alt={`image ${index}`}
+                className="swiperSlideDiv"
+              />
+            </swiper-slide>
+          );
+        })}
+      </swiper-container>
+
       <div
         className="shareIconDiv"
         onClick={() => {
